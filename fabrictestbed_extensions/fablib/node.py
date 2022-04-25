@@ -691,7 +691,7 @@ class Node():
         """
         import logging
 
-        if self.get_docker_image() and not vm: command = "docker exec Docker " + command
+        #if self.get_docker_image() and not vm: command = "docker exec Docker " + command
 
         logging.debug(f"execute node: {self.get_name()}, management_ip: {self.get_management_ip()}, command: {command}")
 
