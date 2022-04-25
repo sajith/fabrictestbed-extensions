@@ -1121,7 +1121,7 @@ class Slice():
                 logging.error(f"Interface: {interface.get_name()} failed to config")
                 logging.error(e, exc_info=True)
 
-        for node in self.get_nodes(): link(node)
+        self.link()
 
     def load_config(self):
         """
