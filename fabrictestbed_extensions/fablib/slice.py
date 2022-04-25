@@ -1057,7 +1057,7 @@ class Slice():
         for node in self.get_nodes():
             if node.get_image() in ["rocky", "centos", "fedora"]: node.execute("sudo yum install -y -qq docker")
             if node.get_image() in ["ubuntu", "debian"]: node.execute("sudo apt-get install -y -q docker.io")
-            ip = 6 if isinstance(node.get_management_ip(), ipaddress.IPv6Address) else 4
+            ip = 6 if isinstance(node.get_management_ip(), IPv6Address) else 4
             node.execute(f"docker run -d -it --name Docker registry.ipv{ip}.docker.com/{node.get_docker_image()}")
 
             interfaces = [iface["ifname"] for iface in node.get_dataplane_os_interfaces()]
