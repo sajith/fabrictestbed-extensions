@@ -1066,7 +1066,7 @@ class Slice():
             try:
                 if node.get_image() in ["rocky", "centos", "fedora"]: node.execute("sudo yum install -y net-tools")
                 if node.get_image() in ["ubuntu", "debian"]: node.execute("sudo apt-get install -y net-tools")
-            except Exception as e"
+            except Exception as e:
                 logging.error(f"Error installing docker on node {node.get_name()}")
                 logging.error(e, exc_info=True)
 
