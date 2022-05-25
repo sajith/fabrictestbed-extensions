@@ -155,83 +155,51 @@ class mflib():
                 #Install mflib user/environment
                 print("Installing mfusers\n")
    
-                #Add user
-                threads = []
-                for node in self.slice.get_nodes():
-                    try:
-                        threads.append([node,node.execute_thread_start("sudo useradd -G root -m mfuser")])
-                    except Exception as e:
-                        print(f"Fail: {e}")
-                for thread in threads:
-                       thread[0].execute_thread_join(thread[1])
-                #Setup ssh 
-                threads = []
-                for node in self.slice.get_nodes():
-                    try:
-                        threads.append([node,node.execute_thread_start("sudo mkdir /home/mfuser/.ssh; sudo chmod 700 /home/mfuser/.ssh; sudo chown -R mfuser:mfuser /home/mfuser/.ssh")])
-                    except Exception as e:
-                        print(f"Fail: {e}")
-                for thread in threads:
-                       thread[0].execute_thread_join(thread[1])
-
-                #Edit commands
-                threads=[]
-                for node in self.slice.get_nodes():
-                    try:
-                        threads.append([node,node.execute_thread_start("echo 'mfuser ALL=(ALL:ALL) NOPASSWD: ALL' | sudo tee -a /etc/sudoers.d/90-cloud-init-users")])
-                    except Exception as e:
-                        print(f"Fail: {e}")
-                for thread in threads:
-                       thread[0].execute_thread_join(thread[1])
-
                 #Upload keys
                 for node in self.slice.get_nodes():
                     try:
                         node.upload_file("/tmp/mflib/mfuser.pub","ansible.pub")
                     except Exception as e:
                         print(f"Fail: {e}")
-
-                #Edit commands
-                threads=[]
+                        
+                #Add user
+                threads = []
                 for node in self.slice.get_nodes():
-                    try:
-                        threads.append([node,node.execute_thread_start("sudo mv ansible.pub /home/mfuser/.ssh/ansible.pub; sudo chown mfuser:mfuser /home/mfuser/.ssh/ansible.pub;")])
-                    except Exception as e:
-                        print(f"Fail: {e}")
+                    if "ubuntu" in node.get_image():
+                        try:
+                            threads.append([node,node.execute_thread_start("""sudo useradd -G root -m mfuser;
+                                                                           sudo mkdir /home/mfuser/.ssh; sudo chmod 700 /home/mfuser/.ssh; sudo chown -R mfuser:mfuser /home/mfuser/.ssh;
+                                                                           echo 'mfuser ALL=(ALL:ALL) NOPASSWD: ALL' | sudo tee -a /etc/sudoers.d/90-cloud-init-users;
+                                                                           sudo mv ansible.pub /home/mfuser/.ssh/ansible.pub; sudo chown mfuser:mfuser /home/mfuser/.ssh/ansible.pub;
+                                                                           sudo cat /home/mfuser/.ssh/ansible.pub | sudo tee -a /home/mfuser/.ssh/authorized_keys;
+                                                                           curl -fsSL https://test.docker.com -o test-docker.sh; sudo sh test-docker.sh; sudo apt-get -y update;
+                                                                           sudo apt-get install -y python3-pip; sudo pip install docker
+                                                                           """)])
+                        except Exception as e:
+                            print(f"Fail: {e}")
+                    else:
+                        if node.get_image() == "default_centos_8":
+                            node.execute("""
+                            cd /etc/yum.repos.d/;
+                            sudo sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-*;
+                            sudo sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-*;
+                            """)
+                        try:
+                            threads.append([node,node.execute_thread_start("""sudo useradd -G root -m mfuser;
+                                                                           sudo mkdir /home/mfuser/.ssh; sudo chmod 700 /home/mfuser/.ssh; sudo chown -R mfuser:mfuser /home/mfuser/.ssh;
+                                                                           echo 'mfuser ALL=(ALL:ALL) NOPASSWD: ALL' | sudo tee -a /etc/sudoers.d/90-cloud-init-users;
+                                                                           sudo mv ansible.pub /home/mfuser/.ssh/ansible.pub; sudo chown mfuser:mfuser /home/mfuser/.ssh/ansible.pub;
+                                                                           sudo cat /home/mfuser/.ssh/ansible.pub | sudo tee -a /home/mfuser/.ssh/authorized_keys;
+                                                                           sudo yum -y update; sudo yum config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo; sudo yum update;
+                                                                           sudo yum install -y docker-ce docker-ce-cli containerd.io;
+                                                                           sudo yum install -y python3-pip; sudo pip3 install docker
+                                                                           """)])
+                        except Exception as e:
+                            print(f"Fail: {e}")
                 for thread in threads:
                        thread[0].execute_thread_join(thread[1])
 
-                #Raise Key
-                threads=[]
-                for node in self.slice.get_nodes():
-                    try:
-                        threads.append([node,node.execute_thread_start("sudo cat /home/mfuser/.ssh/ansible.pub | sudo tee -a /home/mfuser/.ssh/authorized_keys;")])
-                    except Exception as e:
-                        print(f"Fail: {e}")
-                for thread in threads:
-                       thread[0].execute_thread_join(thread[1])
-
-                #Authorize key
-                threads=[]
-                for node in self.slice.get_nodes():
-                    try:
-                        threads.append([node,node.execute_thread_start("sudo chmod 644 /home/mfuser/.ssh/authorized_keys; sudo chown mfuser:mfuser /home/mfuser/.ssh/authorized_keys")])
-                    except Exception as e:
-                        print(f"Fail: {e}")
-                for thread in threads:
-                       thread[0].execute_thread_join(thread[1])
-
-                # TODO move to meas node ansible script
-                #Installs
-                threads=[]
-                for node in self.slice.get_nodes():
-                    try:
-                        threads.append([node,node.execute_thread_start("curl -fsSL https://test.docker.com -o test-docker.sh; sudo sh test-docker.sh; sudo apt-get -y update; sudo apt-get install -y python3-pip; sudo pip install docker")])
-                    except Exception as e:
-                        print(f"Fail: {e}")
-                for thread in threads:
-                       thread[0].execute_thread_join(thread[1])
-
+                
               
             
                 # Upload mfuser private key to meas node & move to mfuser account
