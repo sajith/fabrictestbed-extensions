@@ -7,7 +7,7 @@ from ipywidgets import VBox, HTML, Output, interactive
 import ipywidgets as widgets
 from IPython.display import display
 from fabrictestbed_extensions.fablib.fablib import fablib
-from mflib import mflib
+from fabrictestbed_extensions.mflib.mflib import mflib
 
 class mfvis():
     meas_net_info = {}
