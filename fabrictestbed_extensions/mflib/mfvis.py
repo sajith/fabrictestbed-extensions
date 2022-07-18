@@ -246,7 +246,7 @@ class mfvis():
         :param url: formed url of the prometheus graphs
         :rtype: String
         """
-        return '<iframe src="'+ url + '" width="900" height="400" frameborder="0"></iframe>'
+        return '<iframe src="'+ url + '" width="900" height="500" frameborder="0"></iframe>'
     
     
     def imageViewer(self, graphType, timeFilter, nodeName):
