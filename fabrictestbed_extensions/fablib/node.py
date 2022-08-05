@@ -33,6 +33,8 @@ import time
 import paramiko
 import logging
 
+import select
+
 from fim.slivers.network_service import NSLayer
 from tabulate import tabulate
 
@@ -637,7 +639,7 @@ class Node():
                                                                                  private_key_passphrase=private_key_passphrase)
 
 
-    def execute(self, command, retry=3, retry_interval=10, username=None, private_key_file=None, private_key_passphrase=None):
+    def execute(self, command, retry=3, retry_interval=10, username=None, private_key_file=None, private_key_passphrase=None, chunking=True, quiet=True, read_timeout=10, timeout=None):
         """
         Runs a command on the FABRIC node.
         :param command: the command to run
@@ -646,6 +648,17 @@ class Node():
         :type retry: int
         :param retry_interval: the number of seconds to wait before retrying SSH upon failure
         :type retry_interval: int
+        :param chunking: enable reading stdout and stderr in real-time with chunks
+        :type chunking: bool
+        :param quiet: print stdout and stderr to the screen
+        :type quiet: bool
+        :param read_timeout: the number of seconds to wait before retrying to
+        read from stdout and stderr
+        :type read_timeout: int
+        :param timeout: the number of seconds to wait before terminating the
+        command using the linux timeout command. Specifying a timeout
+        encapsulates the command with the timeout command for you
+        :type timeout: int
         :return: a tuple of  (stdout[Sting],stderr[String])
         :rtype: Tuple
         :raise Exception: if management IP is invalid
@@ -708,10 +721,63 @@ class Node():
                 client.connect(management_ip,username=node_username,pkey = key, sock=bastion_channel)
 
                 #stdin, stdout, stderr = client.exec_command('echo \"' + command + '\" > /tmp/fabric_execute_script.sh; chmod +x /tmp/fabric_execute_script.sh; /tmp/fabric_execute_script.sh')
-                stdin, stdout, stderr = client.exec_command(command)
-                rtn_stdout = str(stdout.read(),'utf-8').replace('\\n','\n')
-                rtn_stderr = str(stderr.read(),'utf-8').replace('\\n','\n')
 
+                if timeout is not None:
+                    command = f'sudo timeout --foreground -k 10 {timeout} ' + command + '\n'
+
+                stdin, stdout, stderr = client.exec_command(command)
+                channel = stdout.channel
+
+                # Only writing one command, so we can shut down stdin and
+                # writing abilities
+                stdin.close()
+                channel.shutdown_write()
+
+                # Read stdout and stderr:
+                if not chunking:
+                    # The old way
+                    rtn_stdout = str(stdout.read(),'utf-8').replace('\\n','\n')
+                    rtn_stderr = str(stderr.read(),'utf-8').replace('\\n','\n')
+                    if not quiet:
+                        print(rtn_stdout, rtn_stderr)
+                else:
+                    # Credit to Stack Overflow user tintin's post here: https://stackoverflow.com/a/32758464
+                    stdout_chunks = []
+                    stdout_chunks.append(stdout.channel.recv(len(stdout.channel.in_buffer)))
+                    stderr_chunks = []
+
+                    while not channel.closed or channel.recv_ready() or channel.recv_stderr_ready(): 
+                        got_chunk = False
+                        readq, _, _ = select.select([stdout.channel], [], [], read_timeout)
+                        for c in readq:
+                            if c.recv_ready():
+                                stdoutbytes = stdout.channel.recv(len(c.in_buffer))
+                                if not quiet:
+                                    print(str(stdoutbytes,'utf-8').replace('\\n','\n'), end='')
+                                stdout_chunks.append(stdoutbytes)
+                                got_chunk = True
+                            if c.recv_stderr_ready(): 
+                                # make sure to read stderr to prevent stall
+                                stderrbytes =  stderr.channel.recv_stderr(len(c.in_stderr_buffer))
+                                if not quiet:
+                                    print('\x1b[31m',str(stderrbytes,'utf-8').replace('\\n','\n'),'\x1b[0m', end='')
+                                stderr_chunks.append(stderrbytes)
+                                got_chunk = True
+
+                        if not got_chunk \
+                            and stdout.channel.exit_status_ready() \
+                            and not stderr.channel.recv_stderr_ready() \
+                            and not stdout.channel.recv_ready(): 
+                            stdout.channel.shutdown_read()  
+                            stdout.channel.close()
+                            break
+
+                    stdout.close()
+                    stderr.close()
+
+                    # chunks are groups of bytes, combine and convert to str
+                    rtn_stdout = b''.join(stdout_chunks).decode("utf-8") 
+                    rtn_stderr = b''.join(stderr_chunks).decode("utf-8") 
 
                 client.close()
                 bastion_channel.close()
@@ -727,6 +793,7 @@ class Node():
                 #success, skip other tries
                 break
             except Exception as e:
+                print(e)
                 try:
                     client.close()
                 except:
