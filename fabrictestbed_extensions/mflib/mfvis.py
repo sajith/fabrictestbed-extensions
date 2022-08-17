@@ -2,6 +2,7 @@ import json
 import traceback
 import os
 import time
+import requests
 import configparser
 from ipywidgets import VBox, HTML, Output, interactive
 import ipywidgets as widgets
@@ -17,7 +18,7 @@ class mfvis():
     meas_net_info = {}
     prometheus_url = None
     
-    def __init__(self, mf_obj=None, slicename=None):
+    def __init__(self, mf_obj=None):
         """
         Constructor. Builds Manager for mfvis object.
         """
@@ -28,7 +29,7 @@ class mfvis():
         self._mf = mf_obj
         self.dashboard_info = {'dashboards':[]}
         self.slice_node_info={}
-        self.get_node_and_interface_names(slicename=slicename)
+        self.get_node_and_interface_names()
         
         self.dashboard_info["time_filters"] = []
         self.dashboard_info["time_filters"].append({'name': 'Last 5 minutes', 'value': "5m", "refresh":"30s"})
@@ -182,14 +183,16 @@ class mfvis():
         self._mf = value 
         
         
-    def get_node_and_interface_names(self, slicename):
+    def get_node_and_interface_names(self):
         """
         Uses fablib to get all the interface names of all the experiment nodes 
         """
         fablib = fablib_manager()
         #fablib.show_config()
+        mfo = self._mf
+        slice_name= mfo._slicename 
         try:
-            slice = fablib.get_slice(name=slicename)
+            slice = fablib.get_slice(name=slice_name)
             for node in slice.get_nodes():
                 if node.get_name() != "_meas_node":
                     self.slice_node_info[node.get_name()]=[]
@@ -325,12 +328,14 @@ class mfvis():
     
     
     
-    def get_available_node_name(self):
+    def get_available_node_names(self):
         """
         Returns the available node names in dropdown menus excluding the meas_node 
         :rtype: List
         """
-        return ['Node1', 'Node2']
+        
+        return (list(self.slice_node_info.keys()))
+        #return ['Node1', 'Node2']
         #node_names = list(self.slice_node_info.keys())
         #print (node_names)
         #return node_names
@@ -556,6 +561,89 @@ class mfvis():
         k = interactive(self.imageViewer,dashboard_name=self.dashboard_widget, panel_name=self.graph_widget, time_filter=self.time_widget, node_name=self.node_widget, interface_name = self.device_widget)
         tab.children = [VBox(list(k.children))]
         display(tab)
+        
+        
+    def get_available_panel_names(self):
+        """
+        Returns a list of available panel names for all dashboards
+        :rtype:List
+        """
+        panel_list=[]
+        for d in self.get_dashboard_names():
+            panel_list+=self.get_panel_names(dashboard_name=d)
+        panel_list.sort()
+        return (panel_list)
+    
+    def check_parameters(self, panel_name, interface_name):
+        """
+        Checks the input parameters for the download_prometheus_graph call
+        if panel_name belongs to network-traffic-dashboard, then interface_name cannot be none
+        """
+        if (panel_name in self.get_panel_names(dashboard_name='network-traffic-dashboard') and interface_name is None):
+            return (f"Please specify interface_name in the call. Run mfv.get_interface_names(node_name) ")
+        elif (panel_name in self.get_panel_names(dashboard_name='node-exporter-full') and interface_name is not None):
+            return (f"This panel does not require interface_name. Please remove interface_name from the call")
+        
+    def check_time_filters(self, time_filter):
+        """
+        Checks whether the input time filter is supported by the library
+        """
+        if (time_filter not in self.get_available_time_filter_names()):
+            return (f"The input time filter is not supported. See supported ones using: mfv.get_available_time_filter_names()")
+        
+    def check_node_names(self, node_name):
+        """
+        Checks whether the input node name is monitored by the measurement framework
+        """
+        if (node_name not in self.get_available_node_names()):
+            return (f"This node name is not supported. See supported ones using: mfv.get_available_node_names()")
+    
+    
+    def grafana_solo_dashboard_url_download(self, dashboard_name):
+        """
+        The base url to get just a panel.
+        """
+        ret_val = ""
+        for d in self.dashboard_info["dashboards"]:
+            if d["name"] == dashboard_name:
+                ret_val = f'{self.grafana_base_url}/d/{d["uid"]}/{d["name"]}?orgId=1' 
+        return ret_val
+    
+    def grafana_panel_url_download(self, dashboard_name, panel_name):
+        ret_val = self.grafana_solo_dashboard_url_download(dashboard_name)
+        for d in self.dashboard_info["dashboards"]:
+            if d["name"] == dashboard_name:
+                #print(d["panels"])
+                for p in d["panels"]:
+                    if p["name"] == panel_name:
+                        ret_val = f'{ret_val}&viewPanel={p["id"]}'
+                # add vars
+                for v in d["vars"]:
+                    if "default" in v:
+                        ret_val += f'&var-{v["name"]}={v["default"]}'
+        return ret_val
+    
+    
+    
+    
+    
+    def download_prometheus_graph(self, dashboard_name, panel_name, time_filter, node_name, interface_name=None):
+        """
+        Methods that allows the users to download prometheus graphs in .png format
+        """
+        #self.check_time_filters(time_filter=time_filter)
+        #self.check_node_names(node_name=node_name)
+        #self.check_parameters(self, panel_name, interface_name)
+        url = self.grafana_panel_url_download(dashboard_name, panel_name)
+        url = self.add_time_filter(url, time_filter)
+        url = self.add_node_name(url, node_name)
+        if (interface_name is not None):
+            url = self.add_interface_name(url, interface_name)
+        print (url)
+            
+        
+            
+            
 
     
 
