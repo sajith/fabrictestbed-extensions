@@ -612,12 +612,15 @@ class mfvis():
         if (time_filter not in self.get_available_time_filter_names()):
             raise Exception(f"The input time filter is not supported. See supported ones using: print(mfv.get_available_time_filter_names())")
         
-    def check_node_names(self, node_name):
+    def check_node_names(self, node_name, interface_name):
         """
         Checks whether the input node name is monitored by the measurement framework
         """
         if (node_name not in self.get_available_node_names()):
             raise Exception(f"This node name is not in the slice. See supported ones using: print(mfv.get_available_node_names())")
+        if (interface_name is not None and interface_name not in self.get_interface_names(node_name)[0]):
+            raise Exception(f"{node_name} does not have interface {interface_name}. See available interfaces using: print(mfv.get_interface_names('{node_name}')[0])")
+            
     
     
     def grafana_solo_dashboard_url_download(self, dashboard_name):
@@ -648,7 +651,7 @@ class mfvis():
         """
         Method that calculates the download url of the graph
         """
-        self.check_node_names(node_name=node_name)
+        self.check_node_names(node_name, interface_name)
         self.check_parameters(dashboard_name, panel_name, node_name, interface_name)
         self.check_time_filters(time_filter=time_filter)
         url = self.grafana_panel_url_download(dashboard_name, panel_name)
@@ -679,7 +682,4 @@ class mfvis():
         if r.status_code == 200:
             with open(file, 'wb') as f:
                 f.write(r.content)
-            
-        
-        
         
