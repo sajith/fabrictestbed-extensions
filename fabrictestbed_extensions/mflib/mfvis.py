@@ -58,6 +58,8 @@ class mfvis():
         self.add_dashboard(network_traffic_dashboard)
         traffic_panels = [{'name': 'Network Traffic by Packets', 'id': 8}, {'name': 'TCP In / Out', 'id': 13}, {'name': 'TCP Errors', 'id': 14}, {'name': 'UDP In / Out', 'id': 16}, {'name': 'UDP Errors', 'id': 17}, {'name': 'Network Traffic Received Errors', 'id': 10}, {'name': 'Network Traffic Send Errors', 'id': 11}]
         self.add_panel("network-traffic-dashboard", traffic_panels)
+        ping_dashboard = {"name":"ping-status", "uid":"hqj_G5R4k", "vars":[],"panels":[{"name":"Ping", "id":2 }]}
+        self.add_dashboard(ping_dashboard)
 
         self.dashboard_widget = None
         self.graph_widget = None
@@ -119,6 +121,7 @@ class mfvis():
                 for p in d["panels"]:
                     if p["name"] == panel_name:
                         ret_val = f'{ret_val}&panelId={p["id"]}'
+                        
                 # add vars
 
                 if "vars" in d:
@@ -665,21 +668,24 @@ class mfvis():
         encoded_tz= urllib.parse.quote(timezone, safe='')
         return (f'{url}&tz={encoded_tz}')
         
-    def download_graph(self, timezone, dashboard_name, panel_name, time_filter, node_name, interface_name=None, file_name=None):
+    def download_graph(self, dashboard_name, panel_name, time_filter, node_name, interface_name=None, file_name=None, time_zone=None):
         if file_name:
             file = file_name
         else:
-            name = panel_name.replace(" ", "")
+            name = panel_name.replace(" ", "-")
             file = f'/home/fabric/work/{name}.png'
         if interface_name:
             url = self.generate_download_url(dashboard_name, panel_name, time_filter, node_name, interface_name=interface_name)
         else:
             url = self.generate_download_url(dashboard_name, panel_name, time_filter, node_name)
-        final_url = self.add_timezone_to_url(url, timezone)
+        if time_zone:
+            final_url = self.add_timezone_to_url(url, time_zone)
+        else:
+            final_url=url
         print (final_url)
         r = requests.get(final_url, verify=False)
         print (r.status_code)
         if r.status_code == 200:
             with open(file, 'wb') as f:
                 f.write(r.content)
-        
+    
