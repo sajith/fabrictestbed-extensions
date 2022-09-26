@@ -48,10 +48,22 @@ class core():
 
     @property
     def slice_name(self):
+        """
+        Returns the name of the slice associated with this object.
+
+        Returns:
+            String: The name of the slice.
+        """
         return self._slice_name 
 
     @slice_name.setter
     def slice_name( self, value ):
+        """
+        Sets the name of the slice associated with this object. Also creates the directories used to store local informations for mflib about the slice.
+        
+        Args:
+            value (str): Name of the slice
+        """
         # Set the slice name
         self._slice_name = value 
 
