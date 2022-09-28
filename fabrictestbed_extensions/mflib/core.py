@@ -57,7 +57,7 @@ class Core():
     """
 
     logging_level = logging.INFO
-    logging_filename = ""
+    log_filename = ""
     
     # logging.info(f"Using core_sanity_version {core_sanity_version}")
     # logging.basicConfig(filename=log_file_path, format='%(asctime)s %(name)-8s %(levelname)-8s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p', level="INFO", force=True)
@@ -81,9 +81,9 @@ class Core():
         #logging.basicConfig(filename=log_file_path, format='%(asctime)s %(name)-8s %(levelname)-8s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p', level="INFO", force=True)
         
         if filename:
-            self.logging_filename = filename
+            self.log_filename = filename
 
-        file_handler = logging.FileHandler(self.logging_filename)
+        file_handler = logging.FileHandler(self.log_filename)
         file_handler.setLevel(self.logging_level)
         file_handler.setFormatter(formatter)
 
@@ -114,12 +114,12 @@ class Core():
         try:
             os.makedirs(self.local_slice_directory)
             os.makedirs(self.log_directory)
-            self.log_file_path = os.path.join(self.log_directory, "mflib.log")
+            self.log_filename = os.path.join(self.log_directory, "mflib.log")
 
-            self.set_core_logger(filename=self.log_file_path)
+            self.set_core_logger(filename=self.log_filename)
 
             self.core_logger.info(f"Using core_sanity_version {self.core_sanity_version}")
-            self.core_logger.basicConfig(filename=log_file_path, format='%(asctime)s %(name)-8s %(levelname)-8s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p', level="INFO", force=True)
+            self.core_logger.basicConfig(filename=self.log_filename, format='%(asctime)s %(name)-8s %(levelname)-8s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p', level="INFO", force=True)
             self.core_logger.info(f"-----Set slice name {value}.-----")
 
         except FileExistsError:
