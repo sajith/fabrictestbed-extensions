@@ -57,7 +57,7 @@ class Core():
     """
 
     logging_level = logging.INFO
-    log_file_path = ""
+    logging_filename = ""
     
     # logging.info(f"Using core_sanity_version {core_sanity_version}")
     # logging.basicConfig(filename=log_file_path, format='%(asctime)s %(name)-8s %(levelname)-8s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p', level="INFO", force=True)
