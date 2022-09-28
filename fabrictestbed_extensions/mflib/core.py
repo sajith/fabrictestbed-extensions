@@ -56,7 +56,7 @@ class Core():
         String: Version.sub-version.build
     """
 
-    core_logger = logging.getLogger()
+    #core_logger = logging.getLogger()
 # logging.exception
 #loggers
     def set_core_logger(self, filename=None):
@@ -76,6 +76,7 @@ class Core():
         if filename:
             self.log_filename = filename
 
+    
         file_handler = logging.FileHandler(self.log_filename)
         file_handler.setLevel(self.logging_level)
         file_handler.setFormatter(formatter)
@@ -107,17 +108,20 @@ class Core():
         try:
             os.makedirs(self.local_slice_directory)
             os.makedirs(self.log_directory)
-            self.log_filename = os.path.join(self.log_directory, "mflib.log")
-
-            self.set_core_logger(filename=self.log_filename)
-
-            self.core_logger.info(f"Using core_sanity_version {self.core_sanity_version}")
-            self.core_logger.basicConfig(filename=self.log_filename, format='%(asctime)s %(name)-8s %(levelname)-8s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p', level="INFO", force=True)
-            self.core_logger.info(f"-----Set slice name {value}.-----")
-
+           
         except FileExistsError:
             pass 
             # Don't care if the file already exists.
+
+
+        self.log_filename = os.path.join(self.log_directory, "mflib.log")
+
+        self.set_core_logger(filename=self.log_filename)
+
+        self.core_logger.info(f"Using core_sanity_version {self.core_sanity_version}")
+        self.core_logger.basicConfig(filename=self.log_filename, format='%(asctime)s %(name)-8s %(levelname)-8s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p', level="INFO", force=True)
+        self.core_logger.info(f"-----Set slice name {value}.-----")
+
 
     @property
     def local_slice_directory(self):
@@ -298,6 +302,7 @@ class Core():
         Constructor.
         """
         #super().__init__()
+        self.core_logger = None
         self.logging_level = logging.INFO
         self.log_filename = ""
         self.set_core_logger(os.path.join(local_storage_directory, "mflib_core.log"))
