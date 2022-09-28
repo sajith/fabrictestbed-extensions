@@ -657,4 +657,5 @@ class mflib(Core):
                 sudo
                 resolvectl dns eth0 2a01:4f9:c010:3f02::1;
             """)
-            # TODO add error checking
+            # needed to fix sudo unable to resolve error
+            node.execute('sudo echo -n "127.0.0.1 " | sudo cat - /etc/hostname  | sudo tee -a /etc/hosts')
