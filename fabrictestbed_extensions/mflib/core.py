@@ -51,9 +51,6 @@ class Core():
         String: Version.sub-version.build
     """
 
-    #core_logger = logging.getLogger()
-# logging.exception
-#loggers
     def set_core_logger(self, filename=None):
         """
         Sets up the core logging file. If filename is given, then log is saved to that filename. Otherwise filename is created from the self.logging_filename.
@@ -698,6 +695,7 @@ class Core():
         try:
             full_command = f"sudo -u mfuser python3 {self.services_directory}/{service}/{command}.py"
             stdout, stderr = self.meas_node.execute(full_command) #retry=3, retry_interval=10, username="mfuser", private_key="mfuser_private_key"
+            self.core_logger.info(stdout)
         except Exception as e:
             print(f"Service Commnad Run Failed: {e}")
 #         print(type(stdout))
