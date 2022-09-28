@@ -65,8 +65,8 @@ class Core():
 # logging.exception
 #loggers
     def set_core_logger(self, filename=None):
-        self.core_logger. = logging.getLogger(__name__)
-        self.core_logger..setLevel(self.logging_level)
+        self.core_logger = logging.getLogger(__name__)
+        self.core_logger.setLevel(self.logging_level)
         
         formatter = logging.Formatter('%(asctime)s %(name)-8s %(levelname)-8s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
         #, level="INFO", force=True)
@@ -76,7 +76,7 @@ class Core():
         file_handler.setLevel(self.logging_level)
         file_handler.setFormatter(formatter)
 
-        self.core_logger..addHandler(file_handler)
+        self.core_logger.addHandler(file_handler)
 
     @property
     def slice_name(self):
@@ -107,9 +107,9 @@ class Core():
 
             self.set_core_logger(filename=log_file_path)
 
-            self.core_logger..info(f"Using core_sanity_version {self.core_sanity_version}")
-            self.core_logger..basicConfig(filename=log_file_path, format='%(asctime)s %(name)-8s %(levelname)-8s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p', level="INFO", force=True)
-            self.core_logger..info(f"-----Set slice name {value}.-----")
+            self.core_logger.info(f"Using core_sanity_version {self.core_sanity_version}")
+            self.core_logger.basicConfig(filename=log_file_path, format='%(asctime)s %(name)-8s %(levelname)-8s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p', level="INFO", force=True)
+            self.core_logger.info(f"-----Set slice name {value}.-----")
 
         except FileExistsError:
             pass 
@@ -734,9 +734,9 @@ class Core():
         """
         cmd = f"sudo -u mfuser git clone -b {self.mf_repo_branch} https://github.com/fabric-testbed/MeasurementFramework.git /home/mfuser/mf_git"
         stdout, stderr = self.meas_node.execute(cmd)
-        self.core_logger..info(f"Cloned MeasurementFramework branch {self.mf_repo_branch} to measure node.")
-        self.core_logger..info(stdout)
-        self.core_logger..info(stderr)
+        self.core_logger.info(f"Cloned MeasurementFramework branch {self.mf_repo_branch} to measure node.")
+        self.core_logger.info(stdout)
+        self.core_logger.info(stderr)
         
     def _run_bootstrap_script(self):
         """
@@ -745,9 +745,9 @@ class Core():
         cmd = f'sudo -u mfuser /home/mfuser/mf_git/instrumentize/experiment_bootstrap/bootstrap.sh'
         stdout, stderr = self.meas_node.execute(cmd)
         
-        self.core_logger..info(f"bootstrap bash script ran on measure node.")
-        self.core_logger..info(stdout)
-        self.core_logger..info(stderr)
+        self.core_logger.info(f"bootstrap bash script ran on measure node.")
+        self.core_logger.info(stdout)
+        self.core_logger.info(stderr)
 
         print("Bootstrap script done")
 
@@ -758,9 +758,9 @@ class Core():
         cmd = f'sudo -u mfuser python3 /home/mfuser/mf_git/instrumentize/experiment_bootstrap/bootstrap_playbooks.py'
         stdout, stderr = self.meas_node.execute(cmd)
         
-        self.core_logger..info(f"bootstrap ansible script ran on measure node.")
-        self.core_logger..info(stdout)
-        self.core_logger..info(stderr)
+        self.core_logger.info(f"bootstrap ansible script ran on measure node.")
+        self.core_logger.info(stdout)
+        self.core_logger.info(stderr)
 
 
         print("Bootstrap ansible scripts done")
