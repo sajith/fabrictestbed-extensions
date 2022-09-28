@@ -47,6 +47,35 @@ from fabrictestbed_extensions.mflib.core import Core
 class mflib(Core):
 
     mflib_sanity_version = "1.0.22"
+
+
+    def set_mflib_logger(self, filename=None):
+        """
+        Sets up the mflib logging file. If filename is given, then log is saved to that filename. Otherwise filename is created from the self.logging_filename.
+        Note that the self.logging_filename will be set with the slice when the slice name is set.
+
+        This method uses the logging filename inherited from Core. If a value is given for the filename, then there will be a separate log file created for this log.
+        Args:
+            filename (_type_, optional): _description_. Defaults to None.
+        """
+        self.mflib_logger = logging.getLogger(__name__)
+        self.mflib_logger.propagate = False # needed?
+        self.mflib_logger.setLevel(self.logging_level)
+        
+        formatter = logging.Formatter('%(asctime)s %(name)-8s %(levelname)-8s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
+        #, level="INFO", force=True)
+        #logging.basicConfig(filename=log_file_path, format='%(asctime)s %(name)-8s %(levelname)-8s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p', level="INFO", force=True)
+        
+        if filename:
+            self.log_filename = filename
+
+    
+        file_handler = logging.FileHandler(self.log_filename)
+        file_handler.setLevel(self.logging_level)
+        file_handler.setFormatter(formatter)
+
+        self.mflib_logger.addHandler(file_handler)
+
           
     # This is a temporary method needed untill modify slice ability is avaialble. 
     @staticmethod 
@@ -111,8 +140,10 @@ class mflib(Core):
         self.slice_name = slice_name
 
         self.slice = fablib.get_slice(name=slice_name)
+
+        self.set_mflib_logger()
         
-        self.core_logger.info(f'Inititializing slice "{slice_name}" for MeasurementFramework.')
+        self.mflib_logger.info(f'Inititializing slice "{slice_name}" for MeasurementFramework.')
         ########################
         # Check for prequisites
         #######################
@@ -124,17 +155,17 @@ class mflib(Core):
             return False
         
         print(f"Found meas node as {self.meas_node.get_name()} at {self.meas_node.get_management_ip()}")
-        self.core_logger.info(f"Found meas node as {self.meas_node.get_name()} at {self.meas_node.get_management_ip()}")
+        self.mflib_logger.info(f"Found meas node as {self.meas_node.get_name()} at {self.meas_node.get_management_ip()}")
         
         bss = self.get_bootstrap_status()
         if bss:
             print("Bootstrap status is")
             print(bss)
-            self.core_logger.info("Bootstrap status is")
-            self.core_logger.info(bss)
+            self.mflib_logger.info("Bootstrap status is")
+            self.mflib_logger.info(bss)
         else:
             print("Bootstrap status not found. Will now start bootstrap process...")
-            self.core_logger.info("Bootstrap status not found. Will now start bootstrap process...")
+            self.mflib_logger.info("Bootstrap status not found. Will now start bootstrap process...")
             
         
         if ("status" in bss and bss["status"] == "ready"):
