@@ -119,6 +119,7 @@ class mflib(Core):
         interfaces.append(meas.add_component(model='NIC_Basic', name="Meas_Nic").get_interfaces()[0])
         meas_net = slice.add_l2network(name="_meas_net", interfaces=interfaces)
     
+        # This logging will appear in the fablib log.
         logging.info(f"Added Meas node & network to slice topography. Cores: {cores}  RAM: {ram}GB Disk {disk}GB")
 
     def __init__(self, slice_name="",local_storage_directory="/tmp/mflib"):
@@ -158,7 +159,7 @@ class mflib(Core):
         # Does Measurement Node exist in topology?
         if not self.meas_node:
             print("Failed to find meas node. Need to addMeasureNode first.")
-            logging.warning("Failed to find meas node. Need to addMeasureNode first.")
+            self.mflib_logger.warning("Failed to find meas node. Need to addMeasureNode first.")
             return False
         
         print(f"Found meas node as {self.meas_node.get_name()} at {self.meas_node.get_management_ip()}")
@@ -179,7 +180,7 @@ class mflib(Core):
             # Slice already instrumentized and ready to go.
             self.get_mfuser_private_key() 
             print("Bootstrap status indicates Slice Measurement Framework is ready.")
-            logging.info("Bootstrap status indicates Slice Measurement Framework is ready.")
+            self.mflib_logger.info("Bootstrap status indicates Slice Measurement Framework is ready.")
             return
         else: 
             
@@ -194,7 +195,7 @@ class mflib(Core):
             #####################
             if "mfuser_keys" in bss and bss["mfuser_keys"] =="ok":
                 print( "mfuser_keys already generated" )
-                logging.info( "mfuser_keys already generated" )
+                self.mflib_logger.info( "mfuser_keys already generated" )
             else:
             #if True:
                 print ("Generating MFUser Keys...")
@@ -242,8 +243,8 @@ class mflib(Core):
                 self._upload_mfuser_keys()
 
                 self._update_bootstrap("mfuser_keys", "ok")
-                print("MFUser keys Done.")
-                logging.info("MFUser keys Done.")
+                print("MFUser key generation Done.")
+                self.mflib_logger.info("MFUser key generation Done.")
             
             
                 
@@ -252,11 +253,11 @@ class mflib(Core):
             ##############################
             if "mfuser_accounts" in bss and bss["mfuser_accounts"] =="ok":
                 print("mfuser accounts are already setup.")
-                # logging.info("mfuser already setup.")
+                self.mflib_logger.info("mfuser already setup.")
             else:
             #if True:  
                 #Install mflib user/environment
-                logging.info("Installing mfusers...")
+                self.mflib_logger.info("Installing mfuser accounts...")
                 print("Installing mfuser accounts...")
                 mfusers_install_success = True
    
@@ -268,15 +269,21 @@ class mflib(Core):
                     
                     except Exception as e:
                         print(f"Failed to add user: {e}")
-                        logging.error(f"Failed to add user: {e}")
+                        self.mflib_logger.error(f"Failed to add user: {e}")
                         mfusers_install_success = False
-                logging.info("Adding mfuser results:")
+                # not doing this since the results are always empty and makes for confusing log entries
+                # logging.info("Adding mfuser results:")
+                # for thread in threads:
+                #     stdout, stderr = thread.result()
+                #     logging.info(stdout)
+                #     logging.error(stderr)
+
                 for thread in threads:
                     stdout, stderr = thread.result()
-                    logging.info(stdout)
-                    logging.error(stderr)
-
+                    if stderr:
+                        self.mflib_logger.error(stderr)
                         
+
                 #Setup ssh directory
                 threads = []
                 for node in self.slice.get_nodes():
@@ -285,14 +292,20 @@ class mflib(Core):
                         
                     except Exception as e:
                         print(f"Fail to setup ssh directory: {e}")
-                        logging.error(f"Fail to setup ssh directory: {e}")
+                        self.mflib_logger.error(f"Fail to setup ssh directory: {e}")
                         mfusers_install_success = False
-                logging.info("Adding SSH dir results:")
+                # logging.info("Adding SSH dir results:")
+                # for thread in threads:
+                #     stdout, stderr = thread.result()
+                    
+                #     logging.info(stdout)
+                #     logging.error(stderr)
+           
                 for thread in threads:
                     stdout, stderr = thread.result()
-                    
-                    logging.info(stdout)
-                    logging.error(stderr)
+                    if stderr:
+                        self.mflib_logger.error(stderr)
+
 
                 #Add mfuser to sudoers
                 threads=[]
@@ -302,13 +315,20 @@ class mflib(Core):
                         
                     except Exception as e:
                         print(f"Fail to add to sudoers: {e}")
-                        logging.error(f"Fail to add to sudoers: {e}")
+                        self.mflib_logger.error(f"Fail to add to sudoers: {e}")
                         mfusers_install_success = False
-                logging.info("Add to sudoers results:")
+
+                # logging.info("Add to sudoers results:")
+                # for thread in threads:
+                #     stdout, stderr = thread.result()
+                #     self.mflib_logger.info(stdout)
+                #     self.mflib_logger.error(stderr)
+ 
+                #logging.info("Add to sudoers results:")
                 for thread in threads:
                     stdout, stderr = thread.result()
-                    logging.info(stdout)
-                    logging.error(stderr)
+                    if stderr:
+                        self.mflib_logger.error(stderr)
  
 
                 #Upload keys
@@ -320,7 +340,8 @@ class mflib(Core):
                         
                     except Exception as e:
                         print(f"Failed to upload keys: {e}")
-                        logging.error(f"Failed to upload keys: {e}")
+                        self.mflib_logger.exception("Failed to upload keys.")
+
                         mfusers_install_success = False
                 
                 #Edit commands
@@ -332,14 +353,15 @@ class mflib(Core):
                         #node. execute_thread("sudo mv ansible.pub /home/mfuser/.ssh/ansible.pub; sudo chown mfuser:mfuser /home/mfuser/.ssh/ansible.pub;")
                     except Exception as e:
                         print(f"Fail to set key permissions: {e}")
-                        logging.error(f"Fail to set key permissions: {e}")
+                        self.mflib_logger.exception("Fail to set key permissions.")
                         mfusers_install_success = False
-                logging.info("Moved keys on node results:")
+
+                #logging.info("Moved keys on node results:")
                 for thread in threads:
                     stdout, stderr = thread.result()
 
-                    logging.info(stdout)
-                    logging.error(stderr)
+                    if stderr:
+                        self.mflib_logger.error(stderr)
 
                 #Raise Key
                 threads=[]
@@ -349,13 +371,14 @@ class mflib(Core):
                         
                     except Exception as e:
                         print(f"Failed to create authorized_keys: {e}")
-                        logging.error(f"Failed to create authorized_keys: {e}")
+                        self.mflib_logger.exception("Failed to create authorized_keys.")
                         mfusers_install_success = False
-                logging.info("Set key permission results:")
+
+                #logging.info("Set key permission results:")
                 for thread in threads:
                     stdout, stderr = thread.result()
-                    logging.info(stdout)
-                    logging.error(stderr)
+                    if stderr:
+                        self.mflib_logger.error(stderr)
  
 
                 #Authorize key
@@ -366,13 +389,14 @@ class mflib(Core):
                         
                     except Exception as e:
                         print(f"Failed to set authorized_keys permissions: {e}")
-                        logging.error(f"Failed to set authorized_keys permissions: {e}")
+                        self.mflib_logger.exception("Failed to set authorized_keys permissions.")
                         mfusers_install_success = False
-                logging.info("Set authorized keys results:")
+
+                #logging.info("Set authorized keys results:")
                 for thread in threads:
                     stdout, stderr = thread.result()
-                    logging.info(stdout)
-                    logging.error(stderr)
+                    if stderr:
+                        self.mflib_logger.error(stderr)
 
                 if not self._copy_mfuser_keys_to_mfuser_on_meas_node():
                     mfusers_install_success = False
@@ -381,10 +405,10 @@ class mflib(Core):
                 if mfusers_install_success:
                     self._update_bootstrap("mfusers", "ok")
                     print("mfuser installations Done.")
-                    logging.info("Mfuser installs done.")
+                    self.mflib_logger.info("Mfuser installs done.")
                 else:
                     print("mfuser installations Failed")
-                    logging.error("Mfuser installs Failed.")
+                    self.mflib_logger.error("Mfuser installs Failed.")
                     return 
             
 
@@ -394,10 +418,13 @@ class mflib(Core):
             #######################
             if "ipv6_4_nat" in bss and (bss["ipv6_4_nat"] == "set" or bss["ipv6_4_nat"] == "not_needed"):
                 print("ipv6 to 4 DNS nat already set or is not needed.")
+                self.mflib_logger.info("ipv6 to 4 DNS nat already set or is not needed.")
             else:
             #if True:
                 nat_set_results = self.set_DNS_all_nodes()
+                self.mflib_logger.info(nat_set_results)
                 self._update_bootstrap("ipv6_4_nat", nat_set_results)
+
 
 
             #######################
@@ -405,6 +432,7 @@ class mflib(Core):
             #######################
             if "repo_cloned" in bss and bss["repo_cloned"] =="ok":
                 print("repo already cloned.")
+                self.mflib_logger.info("MF repo already cloned")
             else:
             #if True:
                 self._clone_mf_repo()
@@ -418,6 +446,7 @@ class mflib(Core):
             ######################################
             if "meas_network" in bss and bss["meas_network"] =="ok":
                 print("measurement network already setup.")
+                self.mflib_logger.info("measurement network already setup.")
             else:
             #if True:
                 self._make_hosts_ini_file(set_ip=True)
@@ -447,32 +476,33 @@ class mflib(Core):
 
             self._update_bootstrap("status", "ready")
             print("Inititialization Done.")
+            self.mflib_logger.info("Inititialization Done.")
 
 
 
 
 # intend this to be overidden
     def instrumentize(self):
-        logging.info(f"Instrumentizing {self.slice_name}")
-        logging.info("Setting up Prometheus.")
+        self.mflib_logger.info(f"Instrumentizing {self.slice_name}")
+        self.mflib_logger.info("Setting up Prometheus.")
         print("Setting up Prometheus...")
         prom_data = self.create("prometheus")
         print(prom_data)
-        logging.info(prom_data)
+        self.mflib_logger.info(prom_data)
 
-        logging.info("Setting up ELK.")
+        self.mflib_logger.info("Setting up ELK.")
         print("Setting up ELK...")
         elk_data = self.create("elk")
         print(elk_data)
-        logging.info(elk_data)
+        self.mflib_logger.info(elk_data)
 
         # Install the default grafana dashboards.
-        logging.info("Setting up grafana_manager & dashboards.")
+        self.mflib_logger.info("Setting up grafana_manager & dashboards.")
         grafana_manager_data = self.create("grafana_manager")
-        logging.info(grafana_manager_data)
+        self.mflib_logger.info(grafana_manager_data)
 
         print("Instrumentize Done.")
-        logging.info("Instrumetize Done")
+        self.mflib_logger.info("Instrumetize Done")
 
         all_data = {}
         all_data["elk"] = elk_data
@@ -488,14 +518,17 @@ class mflib(Core):
         num=1
         base = "10.0.0."
         hosts = []
-        print("Setting measurement nic IPs")
+        if set_ip:
+            print("Setting measurement nic IPs")
+            self.mflib_logger.info("Setting measurement nic IPs")
         for node in self.slice.get_nodes():
             for interface in node.get_interfaces():
                 if ("Meas_Nic" in interface.get_name()):
                     ip = base + str(num)
                    
                     if set_ip:
-                        print("setting interface ip")
+                        print(f"setting interface ip {ip}")
+                        self.mflib_logger.info(f"setting interface ip {ip}")
                         interface.set_ip(ip = ip, cidr = "24")
                     #hosts.append("{0} ansible_host={1} hostname={1} ansible_ssh_user={2} node_exporter_listen_ip={1} node_exporter_username={3} node_exporter_password={3} snmp_community_string={4} grafana_admin_password={3} fabric_prometheus_ht_user={3} fabric_prometheus_ht_password={3}".format(node.get_name(), ip ,"mfuser","fabric","not-in-use"))
                     hosts.append("{0} ansible_host={1} hostname={1} ansible_ssh_user={2} node_exporter_listen_ip={1}".format(node.get_name(), ip ,"mfuser"))
@@ -539,6 +572,7 @@ class mflib(Core):
         self.meas_node.upload_file(local_prom_hosts_filename,"promhosts.ini")
 
         # create a common version of hosts.ini for all to access
+        self.mflib_logger.info("Setting up common hosts.ini file to measurement node.")
         stdout, stderr = self.meas_node.execute("sudo mkdir -p /home/mfuser/services/common")
         stdout, stderr = self.meas_node.execute("sudo chown mfuser:mfuser /home/mfuser/services")
         stdout, stderr = self.meas_node.execute("sudo chown mfuser:mfuser /home/mfuser/services/common")
@@ -585,6 +619,7 @@ class mflib(Core):
         except Exception as e:
             print("Common hosts.ini download has failed.")
             print(f"downloading common hosts file Failed: {e}")
+            self.mflib_logger.exception("Downloading common hosts.ini file has failed.")
             return "",""
 
 
