@@ -57,6 +57,8 @@ class Core():
     """
 
     logging_level = logging.INFO
+    log_file_path = ""
+    
     # logging.info(f"Using core_sanity_version {core_sanity_version}")
     # logging.basicConfig(filename=log_file_path, format='%(asctime)s %(name)-8s %(levelname)-8s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p', level="INFO", force=True)
     # logging.info(f"-----Set slice name {value}.-----")
@@ -65,13 +67,22 @@ class Core():
 # logging.exception
 #loggers
     def set_core_logger(self, filename=None):
+        """
+        Sets up the core logging file. If filename is given, then log is saved to that filename. Otherwise filename is created from the self.logging_filename.
+        Note that the self.logging_filename will be set with the slice when the slice name is set.
+        Args:
+            filename (_type_, optional): _description_. Defaults to None.
+        """
         self.core_logger = logging.getLogger(__name__)
         self.core_logger.setLevel(self.logging_level)
         
         formatter = logging.Formatter('%(asctime)s %(name)-8s %(levelname)-8s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
         #, level="INFO", force=True)
         #logging.basicConfig(filename=log_file_path, format='%(asctime)s %(name)-8s %(levelname)-8s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p', level="INFO", force=True)
-         
+        
+        if filename:
+            self.logging_filename = filename
+
         file_handler = logging.FileHandler(self.logging_filename)
         file_handler.setLevel(self.logging_level)
         file_handler.setFormatter(formatter)
@@ -103,9 +114,9 @@ class Core():
         try:
             os.makedirs(self.local_slice_directory)
             os.makedirs(self.log_directory)
-            log_file_path = os.path.join(self.log_directory, "mflib.log")
+            self.log_file_path = os.path.join(self.log_directory, "mflib.log")
 
-            self.set_core_logger(filename=log_file_path)
+            self.set_core_logger(filename=self.log_file_path)
 
             self.core_logger.info(f"Using core_sanity_version {self.core_sanity_version}")
             self.core_logger.basicConfig(filename=log_file_path, format='%(asctime)s %(name)-8s %(levelname)-8s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p', level="INFO", force=True)
@@ -294,8 +305,8 @@ class Core():
         Constructor.
         """
         #super().__init__()
-
-        logging.info("Creating mflib object.")
+        self.set_core_logger(os.path.join(local_storage_directory, "mflib_core.log"))
+        self.core_logger.info("Creating mflib object.")
         
         #self.mf_repo_branch = "dev"
         self.tunnel_host = "localhost"
