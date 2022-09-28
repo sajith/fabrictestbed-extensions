@@ -67,6 +67,7 @@ class Core():
             filename (_type_, optional): _description_. Defaults to None.
         """
         self.core_logger = logging.getLogger(__name__)
+        self.core_logger.propagate = False # needed?
         self.core_logger.setLevel(self.logging_level)
         
         formatter = logging.Formatter('%(asctime)s %(name)-8s %(levelname)-8s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
@@ -119,7 +120,7 @@ class Core():
         self.set_core_logger(filename=self.log_filename)
 
         self.core_logger.info(f"Using core_sanity_version {self.core_sanity_version}")
-        self.core_logger.basicConfig(filename=self.log_filename, format='%(asctime)s %(name)-8s %(levelname)-8s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p', level="INFO", force=True)
+        #self.core_logger.basicConfig(filename=self.log_filename, format='%(asctime)s %(name)-8s %(levelname)-8s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p', level="INFO", force=True)
         self.core_logger.info(f"-----Set slice name {value}.-----")
 
 

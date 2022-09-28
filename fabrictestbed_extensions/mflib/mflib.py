@@ -103,7 +103,7 @@ class mflib(Core):
         """
         print(f'Inititializing slice "{slice_name}" for MeasurementFramework.')
         
-        logging.info(f'Inititializing slice "{slice_name}" for MeasurementFramework.')
+        
         
         ########################
         # Get slice 
@@ -112,7 +112,7 @@ class mflib(Core):
 
         self.slice = fablib.get_slice(name=slice_name)
         
-
+        self.core_logger.info(f'Inititializing slice "{slice_name}" for MeasurementFramework.')
         ########################
         # Check for prequisites
         #######################
@@ -124,17 +124,17 @@ class mflib(Core):
             return False
         
         print(f"Found meas node as {self.meas_node.get_name()} at {self.meas_node.get_management_ip()}")
-        logging.info(f"Found meas node as {self.meas_node.get_name()} at {self.meas_node.get_management_ip()}")
+        self.core_logger.info(f"Found meas node as {self.meas_node.get_name()} at {self.meas_node.get_management_ip()}")
         
         bss = self.get_bootstrap_status()
         if bss:
             print("Bootstrap status is")
             print(bss)
-            logging.info("Bootstrap status is")
-            logging.info(bss)
+            self.core_logger.info("Bootstrap status is")
+            self.core_logger.info(bss)
         else:
             print("Bootstrap status not found. Will now start bootstrap process...")
-            logging.info("Bootstrap status not found. Will now start bootstrap process...")
+            self.core_logger.info("Bootstrap status not found. Will now start bootstrap process...")
             
         
         if ("status" in bss and bss["status"] == "ready"):
