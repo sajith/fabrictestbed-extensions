@@ -46,7 +46,7 @@ from fabrictestbed_extensions.mflib.core import Core
 
 class mflib(Core):
 
-    mflib_sanity_version = "1.0.22"
+    mflib_sanity_version = "1.0.23"
 
 
     def set_mflib_logger(self, filename=None):
@@ -79,12 +79,19 @@ class mflib(Core):
           
     # This is a temporary method needed untill modify slice ability is avaialble. 
     @staticmethod 
-    def addMeasNode(slice, cores=None, ram=None, disk=None):
+    def addMeasNode(slice, cores=4, ram=16, disk=500):
         """
-        Adds measurement components to an unsubmitted slice object
-        :param slice: Unsubmitted Slice Object
-        :rtype: Slice
+        Adds Measurement node and measurement network to unsubmitted slice object.
+
+        Args:
+            slice (fablib.slice): Slice object already set with experiment topology.
+            cores (int, optional): Cores for measurement node. Defaults to 4 cores.
+            ram (int, optional): _description_. Defaults to 16 GB ram.
+            disk (int, optional): _description_. Defaults to 500 GB disk.
         """
+
+
+
         
         interfaces = []
         sites = []
@@ -98,21 +105,21 @@ class mflib(Core):
         
         meas = slice.add_node(name="_meas_node", site=site)
 
-        if not cores: 
-            cores = meas.default_cores 
+        # if not cores: 
+        #     cores = meas.default_cores 
 
-        if not ram: 
-            ram = meas.default_ram 
+        # if not ram: 
+        #     ram = meas.default_ram 
 
-        if not disk: 
-            disk = 32 #meas.default_disk
+        # if not disk: 
+        #     disk = 500
 
-        meas.set_capacities(cores=cores, ram=ram, disk=32)
+        meas.set_capacities(cores=cores, ram=ram, disk=disk)
         meas.set_image("default_ubuntu_20")
         interfaces.append(meas.add_component(model='NIC_Basic', name="Meas_Nic").get_interfaces()[0])
         meas_net = slice.add_l2network(name="_meas_net", interfaces=interfaces)
     
-        #logging.info("Added Meas node & network to slice topography")
+        logging.info(f"Added Meas node & network to slice topography. Cores: {cores}  RAM: {ram}GB Disk {disk}GB")
 
     def __init__(self, slice_name="",local_storage_directory="/tmp/mflib"):
         """
@@ -579,4 +586,40 @@ class mflib(Core):
             print("Common hosts.ini download has failed.")
             print(f"downloading common hosts file Failed: {e}")
             return "",""
-        
+
+
+# IPV6 to IPV4 only sites fix
+# note: should set bootstrap status file when making these 2 calls, status should be set, restored, not needed.
+    def set_DNS_all_nodes(self):
+        # Check if we need to
+        if(self.meas_node.validIPAddress(self.meas_node.get_management_ip())=="IPv6"):
+            for node in self.slice.get_nodes():
+                self.set_DNS(node)
+            return "set"
+        else:
+            return "not needed"
+
+    def restore_DNS_all_nodes(self):
+        # Check if we need to
+        if(self.meas_node.validIPAddress(self.meas_node.get_management_ip())=="IPv6"):
+            for node in self.slice.get_nodes():
+                self.restore_DNS(node)
+            return "restored"
+        else:
+            return "not needed"
+
+    def set_DNS(self,node):
+        if(node.validIPAddress(node.get_management_ip())=="IPv6"):
+            node.execute("""
+            printf 'nameserver 2a00:1098:2c::1\nnameserver 2a01:4f8:c2c:123f::1\nnameserver 2a01:4f9:c010:3f02::1' > resolv.new;
+            sudo mv /etc/resolv.conf /etc/resolv.old;
+            sudo mv resolv.new /etc/resolv.conf;
+            """)
+            #Needed for fedora
+            node.execute("""
+                sudo resolvectl dns eth0 2a00:1098:2c::1;
+                sudo resolvectl dns eth0 2a01:4f8:c2c:123f::1;
+                sudo
+                resolvectl dns eth0 2a01:4f9:c010:3f02::1;
+            """)
+            # TODO add error checking

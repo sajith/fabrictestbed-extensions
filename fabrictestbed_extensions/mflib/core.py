@@ -30,14 +30,9 @@ from fabrictestbed_extensions.fablib.fablib import fablib
 # For getting vars to make tunnel
 from fabrictestbed_extensions.fablib.fablib import FablibManager
 
-# from cryptography.hazmat.primitives import serialization as crypto_serialization
-# from cryptography.hazmat.primitives.asymmetric import rsa
-# from cryptography.hazmat.backends import default_backend as crypto_default_backend
-# from os import chmod
 
 import string
 import random
-#import paramiko
 
 import logging
 
@@ -47,7 +42,7 @@ class Core():
     It is not intended to be used by itself, but rather, it is the base object for creating Measurement Framework Library objects.
     """
 
-    core_sanity_version = "1.0.22"
+    core_sanity_version = "1.0.23"
     """
     An updatable version for debugging purposes to make sure the correct version of this file is being used. Anyone can update this value as they see fit.
     Should always be increasing.
@@ -201,6 +196,13 @@ class Core():
         else:
             return ""
 
+
+    # Tunnels are needed to access the meas node via the bastion host
+    # In the future these may be combinded into one port with diff nginx paths mappings.
+    # alt copy is a selection added to the fabric_rc file for setting a alertnate location for the files 
+    #   such as on a laptop. This makes it easy to create a tunnel on a users laptop where they will need access
+    #   to the web uis. 
+
     @property
     def tunnel_host(self):
         """
@@ -242,13 +244,6 @@ class Core():
         """
         self._kibana_tunnel_local_port = value
                 
-
-    # Tunnels are needed to access the meas node via the bastion host
-    # In the future these may be combinded into one port with diff nginx paths mappings.
-    # alt copy is a selection added to the fabric_rc file for setting a alertnate location for the files 
-    #   such as on a laptop. This makes it easy to create a tunnel on a users laptop where they will need access
-    #   to the web uis. 
-
     @property
     def grafana_tunnel(self):
         return self._meas_node_ssh_tunnel(local_port = self.grafana_tunnel_local_port, remote_port="443")
@@ -284,6 +279,7 @@ class Core():
                 errmsg += "FABRIC_ALT_COPY_SLICE_PRIVATE_KEY_FILE not found in fabric_rc file. "
             
         if errmsg:
+            self.core_logger.error(f"It appears you have not added alternate ssh config or slice key file locations to the fabric_rc file. {errmsg} ") 
             return "It appears you have not added alternate ssh config or slice key file locations to the fabric_rc file. " + errmsg
         else:
             #return f'ssh -L 10010:localhost:443 -F {extra_fm_vars["FABRIC_ALT_SSH_CONFIG"]} -i {extra_fm_vars["FABRIC_ALT_SLICE_PRIVATE_KEY_FILE"]} {self.slice_username}@{self.meas_node_ip}'
@@ -337,41 +333,41 @@ class Core():
         except FileExistsError:
             pass
 
-# IPV6 to IPV4 only sites fix
-# note: should set bootstrap status file when making these 2 calls, status should be set, restored, not needed.
-    def set_DNS_all_nodes(self):
-        # Check if we need to
-        if(self.meas_node.validIPAddress(self.meas_node.get_management_ip())=="IPv6"):
-            for node in self.slice.get_nodes():
-                self.set_DNS(node)
-            return "set"
-        else:
-            return "not needed"
+# # IPV6 to IPV4 only sites fix
+# # note: should set bootstrap status file when making these 2 calls, status should be set, restored, not needed.
+#     def set_DNS_all_nodes(self):
+#         # Check if we need to
+#         if(self.meas_node.validIPAddress(self.meas_node.get_management_ip())=="IPv6"):
+#             for node in self.slice.get_nodes():
+#                 self.set_DNS(node)
+#             return "set"
+#         else:
+#             return "not needed"
 
-    def restore_DNS_all_nodes(self):
-        # Check if we need to
-        if(self.meas_node.validIPAddress(self.meas_node.get_management_ip())=="IPv6"):
-            for node in self.slice.get_nodes():
-                self.restore_DNS(node)
-            return "restored"
-        else:
-            return "not needed"
+#     def restore_DNS_all_nodes(self):
+#         # Check if we need to
+#         if(self.meas_node.validIPAddress(self.meas_node.get_management_ip())=="IPv6"):
+#             for node in self.slice.get_nodes():
+#                 self.restore_DNS(node)
+#             return "restored"
+#         else:
+#             return "not needed"
 
-    def set_DNS(self,node):
-        if(node.validIPAddress(node.get_management_ip())=="IPv6"):
-            node.execute("""
-            printf 'nameserver 2a00:1098:2c::1\nnameserver 2a01:4f8:c2c:123f::1\nnameserver 2a01:4f9:c010:3f02::1' > resolv.new;
-            sudo mv /etc/resolv.conf /etc/resolv.old;
-            sudo mv resolv.new /etc/resolv.conf;
-            """)
-            #Needed for fedora
-            node.execute("""
-                sudo resolvectl dns eth0 2a00:1098:2c::1;
-                sudo resolvectl dns eth0 2a01:4f8:c2c:123f::1;
-                sudo
-                resolvectl dns eth0 2a01:4f9:c010:3f02::1;
-            """)
-            # TODO add error checking
+#     def set_DNS(self,node):
+#         if(node.validIPAddress(node.get_management_ip())=="IPv6"):
+#             node.execute("""
+#             printf 'nameserver 2a00:1098:2c::1\nnameserver 2a01:4f8:c2c:123f::1\nnameserver 2a01:4f9:c010:3f02::1' > resolv.new;
+#             sudo mv /etc/resolv.conf /etc/resolv.old;
+#             sudo mv resolv.new /etc/resolv.conf;
+#             """)
+#             #Needed for fedora
+#             node.execute("""
+#                 sudo resolvectl dns eth0 2a00:1098:2c::1;
+#                 sudo resolvectl dns eth0 2a01:4f8:c2c:123f::1;
+#                 sudo
+#                 resolvectl dns eth0 2a01:4f9:c010:3f02::1;
+#             """)
+#             # TODO add error checking
 
 
     def restore_DNS(self,node):
@@ -383,13 +379,6 @@ class Core():
             node.execute("""
                 resolvectl revert eth0;
             """)
-
-
-
-
-
-
-
 
           
 # User Methods 
@@ -403,6 +392,8 @@ class Core():
         :param files: List of filepaths to be uploaded.
         :type files: List of Strings
         """
+        self.core_logger.info(f"Run create for {service}")
+        self.core_logger.debug(f"Data is {data}.")
         return self._run_on_meas_node(service, "create", data, files)
 
     def update(self, service, data=None, files=[]):
@@ -415,6 +406,8 @@ class Core():
         :param files: List of filepaths to be uploaded.
         :type files: List of Strings
         """
+        self.core_logger.info(f"Run update for {service}")
+        self.core_logger.debug(f"Data is {data}.")
         return self._run_on_meas_node(service, "update", data, files)
 
     def info(self, service, data=None):
@@ -425,6 +418,8 @@ class Core():
         :param data: Data to be passed to a JSON file place in the service's meas node directory.
         :type data: JSON serializable object.
         """
+        self.core_logger.info(f"Run info for {service}")
+        self.core_logger.debug(f"Data is {data}.")
         return self._run_on_meas_node(service, "info", data)
 
     def start(self, services=[]):
@@ -432,6 +427,7 @@ class Core():
         Restarts a stopped service using existing configs on meas node.
         """
         for service in services:
+            self.core_logger.info(f"Run start for {service}")
             return self._run_on_meas_node(service, "start")
 
     def stop(self, services=[]):
@@ -439,21 +435,23 @@ class Core():
         Stops a service, does not remove the service, just stops it from using resources.
         """
         for service in services:
+            self.core_logger.info(f"Run stop for {service}")
             return self._run_on_meas_node(service, "stop")
 
-    def status(self, services=[]):
-        """
-        Deprecated?, use info instead?
-        Returns predefined status info. Does not change the running of the service.
-        """ 
-        for service in services:
-            return self._run_on_meas_node(service, "status")
+    # def status(self, services=[]):
+    #     """
+    #     Deprecated?, use info instead?
+    #     Returns predefined status info. Does not change the running of the service.
+    #     """ 
+    #     for service in services:
+    #         return self._run_on_meas_node(service, "status")
 
     def remove(self, services=[]):
         """
         Stops a service running and removes anything setup on the experiment's nodes. Service will then need to be re-created using the create command before service can be started again.
         """
         for service in services:
+            self.core_logger.info(f"Run remove for {service}")
             return self._run_on_meas_node(service, "remove")
 
 
@@ -472,7 +470,7 @@ class Core():
         try:
             local_file_path = private_filename
             remote_file_path = self.mfuser_private_key_filename
-            stdout, stderr = self.meas_node.upload_file(local_file_path, remote_file_path) #, retry=3, retry_interval=10):
+            fa = self.meas_node.upload_file(local_file_path, remote_file_path) #, retry=3, retry_interval=10):
 
         except TypeError:
             pass 
@@ -480,13 +478,15 @@ class Core():
             # This error is happening due to the file permmissions not being correctly set on the remote?
         except Exception as e:
             print(f"Failed Private Key Upload: {e}")
+            self.core_logger.exception("Failed to upload mfuser private key to default user.")
 
         try:
             local_file_path = public_filename
             remote_file_path = self.mfuser_public_key_filename
-            stdout, stderr = self.meas_node.upload_file(local_file_path, remote_file_path) #, retry=3, retry_interval=10):
+            fa = self.meas_node.upload_file(local_file_path, remote_file_path) #, retry=3, retry_interval=10):
         except TypeError:
             pass 
+            self.core_logger.exception("Failed to upload mfuser public key to default user.")
             # TODO set file permissions on remote
             # This error is happening due to the file permmissions not being correctly set on the remote?   
             # Errors are:
@@ -494,6 +494,7 @@ class Core():
             # Failed Public Key Upload: cannot unpack non-iterable SFTPAttributes object     
         except Exception as e:
             print(f"Failed Public Key Upload: {e}")
+            self.core_logger.exception("Failed to upload mfuser keys to default user.")
 
 
         # Set the permissions correctly on the remote machine.
@@ -510,16 +511,20 @@ class Core():
             cmd = f"sudo cp {self.mfuser_public_key_filename} /home/mfuser/.ssh/{self.mfuser_public_key_filename}; sudo chown mfuser:mfuser /home/mfuser/.ssh/{self.mfuser_public_key_filename}; sudo chmod 644 /home/mfuser/.ssh/{self.mfuser_public_key_filename}"
             stdout, stderr = self.meas_node.execute(cmd)
         
-            print(stdout)
-            print(stderr)
+            self.core_logger.info(stdout)
+            self.core_logger.info(stderr)
 
             cmd = f"sudo cp {self.mfuser_private_key_filename} /home/mfuser/.ssh/{self.mfuser_private_key_filename}; sudo chown mfuser:mfuser /home/mfuser/.ssh/{self.mfuser_private_key_filename}; sudo chmod 600 /home/mfuser/.ssh/{self.mfuser_private_key_filename}"
             stdout, stderr = self.meas_node.execute(cmd)
 
-            print(stdout)
-            print(stderr)
+            self.core_logger.info(stdout)
+            self.core_logger.info(stderr)
+
         except Exception as e:
             print(f"Failed mfuser key user key copy: {e}")
+            self.core_logger.exception("Failed to copy mfuser keys to meas node.")
+            self.core_logger.info(stdout)
+            self.core_logger.info(stderr)
             return False 
         return True
 
@@ -545,6 +550,9 @@ class Core():
             
         except Exception as e:
             print(f"Download mfuser Keys Failed: {e}")
+            self.core_logger.exception("Failed to download mfuser keys.")
+            self.core_logger.info(stdout)
+            self.core_logger.info(stderr)
 
 
     def _find_meas_node(self):
@@ -560,6 +568,7 @@ class Core():
                     return True 
         except Exception as e:
             print(f"Find Measure Node Failed: {e}")
+            self.core_logger.exception("Failed to find Measure Node")
         self._meas_node = None
         return False
 
@@ -620,13 +629,16 @@ class Core():
             # mv file to final location
             cmd = f"sudo mv {remote_tmp_file_path} {final_remote_file_path};  sudo chown mfuser:mfuser {final_remote_file_path}"
             
-            self.meas_node.execute(cmd)
+            stdout, stderr = self.meas_node.execute(cmd)
             
             # Remove local temp file.
             os.remove(local_file_path)
             
         except Exception as e:
             print(f"Service Data Upload Failed: {e}")  
+            self.core_logger.exception("Upload service data failed")
+            self.core_logger.info(stdout)
+            self.core_logger.info(stderr)
             return False
         return True
 
@@ -660,10 +672,13 @@ class Core():
                 fa = self.meas_node.upload_file(local_file_path, remote_tmp_file_path) # retry=3, retry_interval=10, username="mfuser", private_key="mfuser_private_key")
                 cmd = f"sudo mv {remote_tmp_file_path} {final_remote_file_path};  sudo chown mfuser:mfuser {final_remote_file_path}; sudo rm {remote_tmp_file_path}"
  
-                self.meas_node.execute(cmd)
+                stdout, stderr = self.meas_node.execute(cmd)
 
         except Exception as e:
             print(f"Service File Upload Failed: {e}")
+            self.core_logger.exception("Upload service files failed")
+            self.core_logger.info(stdout)
+            self.core_logger.info(stderr)
             return False
         return True
 
@@ -706,6 +721,11 @@ class Core():
             print("STDERR: ")
             print(stderr)
             print(f"Fail: {e}")
+
+            self.core_logger.exception("Unable to convert returned comand json.")
+            self.core_logger.info(stdout)
+            self.core_logger.info(stderr)
+
         return {} #(stdout, stderr)
 
 
@@ -737,6 +757,7 @@ class Core():
             return {"success":True, "filename":local_file_path}
         except Exception as e:
             print(f"Download service file Fail: {e}")
+            self.core_logger.exception()
             return {"success":False}
         
         
@@ -746,7 +767,7 @@ class Core():
         """
         cmd = f"sudo -u mfuser git clone -b {self.mf_repo_branch} https://github.com/fabric-testbed/MeasurementFramework.git /home/mfuser/mf_git"
         stdout, stderr = self.meas_node.execute(cmd)
-        self.core_logger.info(f"Cloned MeasurementFramework branch {self.mf_repo_branch} to measure node.")
+        self.core_logger.info(f"Cloned MeasurementFramework branch '{self.mf_repo_branch}' to measure node.")
         self.core_logger.info(stdout)
         self.core_logger.info(stderr)
         
