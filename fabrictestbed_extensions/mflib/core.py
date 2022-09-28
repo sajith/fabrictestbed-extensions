@@ -56,13 +56,6 @@ class Core():
         String: Version.sub-version.build
     """
 
-    logging_level = logging.INFO
-    log_filename = ""
-    
-    # logging.info(f"Using core_sanity_version {core_sanity_version}")
-    # logging.basicConfig(filename=log_file_path, format='%(asctime)s %(name)-8s %(levelname)-8s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p', level="INFO", force=True)
-    # logging.info(f"-----Set slice name {value}.-----")
-
     core_logger = logging.getLogger()
 # logging.exception
 #loggers
@@ -305,6 +298,8 @@ class Core():
         Constructor.
         """
         #super().__init__()
+        self.logging_level = logging.INFO
+        self.log_filename = ""
         self.set_core_logger(os.path.join(local_storage_directory, "mflib_core.log"))
         self.core_logger.info("Creating mflib object.")
         
