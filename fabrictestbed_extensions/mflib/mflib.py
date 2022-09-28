@@ -199,7 +199,7 @@ class mflib(Core):
             else:
             #if True:
                 print ("Generating MFUser Keys...")
-                logging.info( "Generating MFUser Keys..." )
+                self.mflib_logger.info( "Generating MFUser Keys..." )
                 key = rsa.generate_private_key(
                     backend=crypto_default_backend(),
                     public_exponent=65537,
