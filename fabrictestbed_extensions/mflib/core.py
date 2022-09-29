@@ -68,8 +68,14 @@ class Core():
         
         if filename:
             self.log_filename = filename
+            # Make sure log directory exists
+            if not os.path.exists(os.path.dirname(self.log_filename)):
+                os.makedirs(os.path.dirname(self.log_filename))
 
-    
+        # Make sure log directory exists
+        if not os.path.exists(self.log_directory):
+            os.makedirs(self.log_directory)
+
         file_handler = logging.FileHandler(self.log_filename)
         file_handler.setLevel(self.logging_level)
         file_handler.setFormatter(formatter)
