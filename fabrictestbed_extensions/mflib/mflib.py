@@ -48,13 +48,13 @@ class mflib(Core):
 
     mflib_sanity_version = "1.0.23"
 
-
-    def set_mflib_logger(self, filename=None):
+# TODO fix docstring here
+    def set_mflib_logger(self): #, filename=None):
         """
         Sets up the mflib logging file. If filename is given, then log is saved to that filename. Otherwise filename is created from the self.logging_filename.
         Note that the self.logging_filename will be set with the slice when the slice name is set.
 
-        This method uses the logging filename inherited from Core. If a value is given for the filename, then there will be a separate log file created for this log.
+        This method uses the logging filename inherited from Core. #If a value is given for the filename, then there will be a separate log file created for this log.
         Args:
             filename (_type_, optional): _description_. Defaults to None.
         """
@@ -66,11 +66,11 @@ class mflib(Core):
         #, level="INFO", force=True)
         #logging.basicConfig(filename=log_file_path, format='%(asctime)s %(name)-8s %(levelname)-8s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p', level="INFO", force=True)
         
-        if filename:
-            self.log_filename = filename
-            # Make sure log directory exists
-            if not os.path.exists(os.path.dirname(self.log_filename)):
-                os.makedirs(os.path.dirname(self.log_filename))
+        # if filename:
+        #     self.log_filename = filename
+        #     # Make sure log directory exists
+        #     if not os.path.exists(os.path.dirname(self.log_filename)):
+        #         os.makedirs(os.path.dirname(self.log_filename))
 
 
         # Make sure log directory exists

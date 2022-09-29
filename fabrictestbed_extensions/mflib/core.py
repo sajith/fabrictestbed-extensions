@@ -51,7 +51,7 @@ class Core():
         String: Version.sub-version.build
     """
 
-    def set_core_logger(self, filename=None):
+    def set_core_logger(self): #, filename=None):
         """
         Sets up the core logging file. If filename is given, then log is saved to that filename. Otherwise filename is created from the self.logging_filename.
         Note that the self.logging_filename will be set with the slice when the slice name is set.
@@ -66,11 +66,11 @@ class Core():
         #, level="INFO", force=True)
         #logging.basicConfig(filename=log_file_path, format='%(asctime)s %(name)-8s %(levelname)-8s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p', level="INFO", force=True)
         
-        if filename:
-            self.log_filename = filename
-            # Make sure log directory exists
-            if not os.path.exists(os.path.dirname(self.log_filename)):
-                os.makedirs(os.path.dirname(self.log_filename))
+        # if filename:
+        #     self.log_filename = filename
+        #     # Make sure log directory exists
+        #     if not os.path.exists(os.path.dirname(self.log_filename)):
+        #         os.makedirs(os.path.dirname(self.log_filename))
 
         # Make sure log directory exists
         if not os.path.exists(self.log_directory):
@@ -115,7 +115,7 @@ class Core():
 
         self.log_filename = os.path.join(self.log_directory, "mflib.log")
 
-        self.set_core_logger(filename=self.log_filename)
+        self.set_core_logger()
 
         self.core_logger.info(f"Using core_sanity_version {self.core_sanity_version}")
         #self.core_logger.basicConfig(filename=self.log_filename, format='%(asctime)s %(name)-8s %(levelname)-8s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p', level="INFO", force=True)
@@ -302,10 +302,17 @@ class Core():
         Constructor.
         """
         #super().__init__()
+
+        try:
+            self.local_storage_directory = local_storage_directory
+            os.makedirs(self.local_storage_directory)
+        except FileExistsError:
+            pass
+
         self.core_logger = None
         self.logging_level = logging.INFO
-        self.log_filename = ""
-        self.set_core_logger(os.path.join(local_storage_directory, "mflib_core.log"))
+        self.log_filename = "mflib_core.log"
+        self.set_core_logger()
         self.core_logger.info("Creating mflib object.")
         
         #self.mf_repo_branch = "dev"
@@ -330,11 +337,7 @@ class Core():
         self.mfuser_private_key_filename = "mfuser_private_key"
         self.mfuser_public_key_filename = "mfuser_public_key"
 
-        try:
-            self.local_storage_directory = local_storage_directory
-            os.makedirs(self.local_storage_directory)
-        except FileExistsError:
-            pass
+
 
 # # IPV6 to IPV4 only sites fix
 # # note: should set bootstrap status file when making these 2 calls, status should be set, restored, not needed.
