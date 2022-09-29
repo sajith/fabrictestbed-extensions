@@ -275,7 +275,7 @@ class mflib(Core):
                     
                     except Exception as e:
                         print(f"Failed to add user: {e}")
-                        self.mflib_logger.error(f"Failed to add user: {e}")
+                        self.mflib_logger.exception(f"Failed to add mfuser user.")
                         mfusers_install_success = False
                 # not doing this since the results are always empty and makes for confusing log entries
                 # logging.info("Adding mfuser results:")
@@ -321,7 +321,7 @@ class mflib(Core):
                         
                     except Exception as e:
                         print(f"Fail to add to sudoers: {e}")
-                        self.mflib_logger.error(f"Fail to add to sudoers: {e}")
+                        self.mflib_logger.exception(f"Fail to add to sudoers:")
                         mfusers_install_success = False
 
                 # logging.info("Add to sudoers results:")
@@ -428,7 +428,7 @@ class mflib(Core):
             else:
             #if True:
                 nat_set_results = self.set_DNS_all_nodes()
-                self.mflib_logger.info(nat_set_results)
+                self.mflib_logger.info(f"ipv6_4_nat" {nat_set_results}")
                 self._update_bootstrap("ipv6_4_nat", nat_set_results)
 
 
