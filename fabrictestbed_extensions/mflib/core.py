@@ -519,20 +519,20 @@ class Core():
             cmd = f"sudo cp {self.mfuser_public_key_filename} /home/mfuser/.ssh/{self.mfuser_public_key_filename}; sudo chown mfuser:mfuser /home/mfuser/.ssh/{self.mfuser_public_key_filename}; sudo chmod 644 /home/mfuser/.ssh/{self.mfuser_public_key_filename}"
             stdout, stderr = self.meas_node.execute(cmd)
         
-            self.core_logger.info(stdout)
-            self.core_logger.info(stderr)
+            self.core_logger.debug(f"STDOUT: {stdout}")
+            self.core_logger.debug(f"STDERR: {stderr}")
 
             cmd = f"sudo cp {self.mfuser_private_key_filename} /home/mfuser/.ssh/{self.mfuser_private_key_filename}; sudo chown mfuser:mfuser /home/mfuser/.ssh/{self.mfuser_private_key_filename}; sudo chmod 600 /home/mfuser/.ssh/{self.mfuser_private_key_filename}"
             stdout, stderr = self.meas_node.execute(cmd)
 
-            self.core_logger.info(stdout)
-            self.core_logger.info(stderr)
+            self.core_logger.debug(f"STDOUT: {stdout}")
+            self.core_logger.debug(f"STDERR: {stderr}")
 
         except Exception as e:
             print(f"Failed mfuser key user key copy: {e}")
             self.core_logger.exception("Failed to copy mfuser keys to meas node.")
-            self.core_logger.info(stdout)
-            self.core_logger.info(stderr)
+            self.core_logger.debug(f"STDOUT: {stdout}")
+            self.core_logger.debug(f"STDERR: {stderr}")
             return False 
         return True
 
@@ -559,8 +559,8 @@ class Core():
         except Exception as e:
             print(f"Download mfuser Keys Failed: {e}")
             self.core_logger.exception("Failed to download mfuser keys.")
-            self.core_logger.info(stdout)
-            self.core_logger.info(stderr)
+            self.core_logger.debug(f"STDOUT: {stdout}")
+            self.core_logger.debug(f"STDERR: {stderr}")
 
 
     def _find_meas_node(self):
@@ -645,8 +645,8 @@ class Core():
         except Exception as e:
             print(f"Service Data Upload Failed: {e}")  
             self.core_logger.exception("Upload service data failed")
-            self.core_logger.info(stdout)
-            self.core_logger.info(stderr)
+            self.core_logger.debug(f"STDOUT: {stdout}")
+            self.core_logger.debug(f"STDERR: {stderr}")
             return False
         return True
 
@@ -685,8 +685,8 @@ class Core():
         except Exception as e:
             print(f"Service File Upload Failed: {e}")
             self.core_logger.exception("Upload service files failed")
-            self.core_logger.info(stdout)
-            self.core_logger.info(stderr)
+            self.core_logger.debug(f"STDOUT: {stdout}")
+            self.core_logger.debug(f"STDERR: {stderr}")
             return False
         return True
 
@@ -706,7 +706,7 @@ class Core():
         try:
             full_command = f"sudo -u mfuser python3 {self.services_directory}/{service}/{command}.py"
             stdout, stderr = self.meas_node.execute(full_command) #retry=3, retry_interval=10, username="mfuser", private_key="mfuser_private_key"
-            self.core_logger.info(stdout)
+            self.core_logger.info(f"STDOUT: {stdout}")
         except Exception as e:
             print(f"Service Commnad Run Failed: {e}")
 #         print(type(stdout))
@@ -732,8 +732,8 @@ class Core():
             print(f"Fail: {e}")
 
             self.core_logger.exception("Unable to convert returned comand json.")
-            self.core_logger.info(stdout)
-            self.core_logger.info(stderr)
+            self.core_logger.debug(f"STDOUT: {stdout}")
+            self.core_logger.debug(f"STDERR: {stderr}")
 
         return {} #(stdout, stderr)
 
@@ -777,8 +777,8 @@ class Core():
         cmd = f"sudo -u mfuser git clone -b {self.mf_repo_branch} https://github.com/fabric-testbed/MeasurementFramework.git /home/mfuser/mf_git"
         stdout, stderr = self.meas_node.execute(cmd)
         self.core_logger.info(f"Cloned MeasurementFramework branch '{self.mf_repo_branch}' to measure node.")
-        self.core_logger.info(stdout)
-        self.core_logger.info(stderr)
+        self.core_logger.debug(f"STDOUT: {stdout}")
+        self.core_logger.debug(f"STDERR: {stderr}")
         
     def _run_bootstrap_script(self):
         """
@@ -788,8 +788,8 @@ class Core():
         stdout, stderr = self.meas_node.execute(cmd)
         
         self.core_logger.info(f"bootstrap bash script ran on measure node.")
-        self.core_logger.info(stdout)
-        self.core_logger.info(stderr)
+        self.core_logger.info(f"STDOUT: {stdout}")
+        self.core_logger.info(f"STDERR: {stderr}")
 
         print("Bootstrap script done")
 
