@@ -309,6 +309,9 @@ class Core():
         except FileExistsError:
             pass
 
+        # The slice_name
+        self._slice_name = ""
+
         self.core_logger = None
         self.logging_level = logging.INFO
         self.log_filename = "mflib_core.log"
@@ -321,8 +324,7 @@ class Core():
         self.kibana_tunnel_local_port = "10020"
 
 
-        # The slice_name
-        self._slice_name = ""
+  
         # The slice object
         self.slice = None
         # The meas_node object
