@@ -62,7 +62,7 @@ class mflib(Core):
         self.mflib_logger.propagate = False # needed?
         self.mflib_logger.setLevel(self.logging_level)
         
-        formatter = logging.Formatter('%(asctime)s %(name)-8s %(levelname)-8s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
+        formatter = logging.Formatter('%(asctime)s %(name)-8s %(levelname)-8s %(message)s', datefmt='%m/%d/%Y H:%M:%S %p')
         #, level="INFO", force=True)
         #logging.basicConfig(filename=log_file_path, format='%(asctime)s %(name)-8s %(levelname)-8s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p', level="INFO", force=True)
         
