@@ -801,8 +801,8 @@ class Core():
         stdout, stderr = self.meas_node.execute(cmd)
         
         self.core_logger.info(f"bootstrap ansible script ran on measure node.")
-        self.core_logger.info(stdout)
-        self.core_logger.info(stderr)
+        self.core_logger.info(f"STDOUT: {stdout}")
+        self.core_logger.info(f"STDERR: {stderr}")
 
 
         print("Bootstrap ansible scripts done")
@@ -828,7 +828,7 @@ class Core():
             with open(self.bootstrap_status_file) as bsf:
                 try:
                     bootstrap_dict = json.load(bsf)
-                    print(bootstrap_dict)
+                    #print(bootstrap_dict)
                     if bootstrap_dict:
                         return bootstrap_dict 
                     else:

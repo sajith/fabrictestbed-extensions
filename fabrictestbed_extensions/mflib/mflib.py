@@ -174,14 +174,13 @@ class mflib(Core):
         
         bss = self.get_bootstrap_status()
         if bss:
-            print("Bootstrap status is")
-            print(bss)
+            #print("Bootstrap status is")
+            #print(bss)
             self.mflib_logger.info("Bootstrap status is")
             self.mflib_logger.info(bss)
         else:
             print("Bootstrap status not found. Will now start bootstrap process...")
             self.mflib_logger.info("Bootstrap status not found. Will now start bootstrap process...")
-            
         
         if ("status" in bss and bss["status"] == "ready"):
             # Slice already instrumentized and ready to go.
@@ -479,6 +478,7 @@ class mflib(Core):
             #if True:
                 print("Bootstrapping measurement node via ansible...")
                 self._run_bootstrap_ansible()
+                self._update_bootstrap("bootstrap_ansible", "ok")
             
 
             self._update_bootstrap("status", "ready")
