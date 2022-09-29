@@ -314,7 +314,7 @@ class Core():
 
         self.core_logger = None
         self.logging_level = logging.INFO
-        self.log_filename = "mflib_core.log"
+        self.log_filename = os.path.join(self.log_directory, "mflib_core.log")
         self.set_core_logger()
         self.core_logger.info("Creating mflib object.")
         
