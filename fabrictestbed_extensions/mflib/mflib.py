@@ -127,7 +127,7 @@ class mflib(Core):
         meas_net = slice.add_l2network(name="_meas_net", interfaces=interfaces)
     
         # This logging will appear in the fablib log.
-        logging.info(f"Added Meas node & network to slice topography. Cores: {cores}  RAM: {ram}GB Disk {disk}GB")
+        logging.info(f'Added Meas node & network to slice "{slice.get_name()}" topography. Cores: {cores}  RAM: {ram}GB Disk {disk}GB')
 
     def __init__(self, slice_name="",local_storage_directory="/tmp/mflib"):
         """
