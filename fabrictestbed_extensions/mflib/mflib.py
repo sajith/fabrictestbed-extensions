@@ -428,7 +428,7 @@ class mflib(Core):
             else:
             #if True:
                 nat_set_results = self.set_DNS_all_nodes()
-                self.mflib_logger.info(f"ipv6_4_nat" {nat_set_results}")
+                self.mflib_logger.info(f"ipv6_4_nat: {nat_set_results}")
                 self._update_bootstrap("ipv6_4_nat", nat_set_results)
 
 
